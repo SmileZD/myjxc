@@ -1,10 +1,19 @@
-<script setup>
-
-</script>
-
 <template>
-<div>1</div>
+    <div>1</div>
 </template>
+
+<script>
+export default {
+    name: "Index",
+    data() {
+        return {}
+    },
+    methods: {},
+    created() {
+
+    }
+}
+</script>
 
 <style scoped>
 

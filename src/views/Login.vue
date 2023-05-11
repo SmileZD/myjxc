@@ -3,6 +3,7 @@
         <el-col :lg="7" :xl="6">
             <div class="login-form">
                 <h2>进销存</h2>
+                <h3>v1.0.0</h3>
             </div>
         </el-col>
         <el-col :span="1">
@@ -17,31 +18,31 @@
                     <el-input v-model="loginForm.password" type="password"></el-input>
                 </el-form-item>
                 <el-form-item label="店铺" prop="app_id" style="width: 380px;">
-                    <el-input v-model="loginForm.app_id"></el-input>
-                </el-form-item>
-                <el-form-item label="验证码" prop="code" style="width: 380px;">
-                    <el-input v-model="loginForm.code" maxlength="5" style="width: 172px; float: left;"></el-input>
-                    <el-image :src="captchaImg" class="captchaImg" @click="getCaptcha"></el-image>
+                    <el-select v-model="loginForm.app_id" placeholder="请选择店铺" style="width: 100%;">
+                        <el-option v-for="store in storeList" :key="store.value" :label="store.text"
+                                   :value="store.value"></el-option>
+                    </el-select>
                 </el-form-item>
                 <el-form-item>
-                    <el-button type="primary" @click="submitForm('loginForm')">提交</el-button>
+                    <el-button type="primary" @click="submitForm('loginForm')">登录</el-button>
                 </el-form-item>
             </el-form>
         </el-col>
     </el-row>
 </template>
 <script>
-import qs from 'qs'
+
 export default {
     name: "Login",
     data() {
         return {
+            storeList: [
+                {value: 1, text: '中央商场'}
+            ],
             loginForm: {
                 username: 'admin',
-                password: 'markerhub',
-                code: '1111',
-                app_id: 0,
-                token: '',
+                password: '123456',
+                app_id: '',
             },
             rules: {
                 username: [
@@ -51,49 +52,33 @@ export default {
                     {required: true, message: '请输入密码', trigger: 'blur'}
                 ],
                 app_id: [
-                    {required: true, message: '请选址店铺', trigger: 'blur'}
-                ],
-                code: [
-                    {required: true, message: '请输入验证码', trigger: 'blur'},
-                    {min: 4, max: 4, message: '验证码为4个字符', trigger: 'blur'}
-                ],
+                    {required: true, message: '请选择店铺', trigger: 'blur'}
+                ]
             },
-            captchaImg: ''
         }
     },
     methods: {
         submitForm(formName) {
             this.$refs[formName].validate((valid) => {
-                if (valid) {
-                    this.$axios.post('/login?' + qs.stringify(this.loginForm)).then(res => {
-                        console.log(res.data)
-                        const jwt = res.headers['authorization']
-                        this.$store.commit("SET_TOKEN", jwt)
-                        this.$router.push("/index")
-                    }).catch(error => {
-                        this.getCaptcha();
-                        console.log('error submit!!');
-                    })
-                } else {
-                    this.getCaptcha();
-                    console.log('error submit!!');
-                    return false;
+                if (!valid) {
+                    return false
                 }
+                this.$axios.post('/user/login', this.loginForm).then(res => {
+                    localStorage.setItem("zdjxctoken", res.token)
+                    localStorage.setItem("zdjxcuserinfo", JSON.stringify(res))
+                    this.$router.push("/")
+                }).catch(() => {
+                })
             });
-        },
-        getCaptcha() {
-            // this.$axios.get('/captcha').then(res => {
-            //     this.loginForm.token = res.data.data.token
-            //     this.captchaImg = res.data.data.captchaImg
-            // })
         }
     },
     created() {
-        this.getCaptcha()
+        this.$axios.get('/app/getList').then(res => {
+            this.storeList = res
+        })
     }
 }
 </script>
-
 
 <style scoped>
 .el-col {
@@ -107,15 +92,5 @@ export default {
 .el-row {
     height: 100%;
     background-color: #fafafa;
-}
-
-.el-divider {
-    height: 200px;
-}
-
-.captchaImg {
-    float: left;
-    margin-left: 8px;
-    border-radius: 4px;
 }
 </style>
